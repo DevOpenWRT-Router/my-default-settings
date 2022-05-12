@@ -20,8 +20,8 @@ uci -q set upnpd.config.enabled='1'
 uci commit upnpd
 
 uci -q batch <<-EOF
-uci set system.@system[0].timezone=UTC
-uci set system.@system[0].zonename=America/New York
+set system.@system[0].timezone='UTC'
+set system.@system[0].zonename='America/New York'
 delete system.ntp.server
 add_list system.ntp.server='0.us.pool.ntp.org'
 add_list system.ntp.server='1.us.pool.ntp.org'
