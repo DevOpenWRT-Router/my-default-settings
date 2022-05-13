@@ -1,5 +1,5 @@
-#!/bin/ash
-# shellcheck shell=dash
+#!/bin/bash
+# shellcheck shell=bash
 #################################################################
 # Copyright (c) 2022 By Eliminater74                            #
 #                                                               #
@@ -35,7 +35,7 @@ if [ ! -f "$FILE" ]; then
         fi
         echo "Download complete, you may now enjoy English iStore"
         else echo "iStore files not found, perhaps iStore isn't installed or you changed its default path?"
-    fi ;;
+    fi
     touch $FILE
 fi
 
