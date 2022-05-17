@@ -127,9 +127,6 @@ ln -sf /sbin/ip /usr/bin/ip
 ###  Modify the host name, the OpenWrt-123 modifications you like on the line (not pure digital)
 # sed -i '/uci commit system/i\uci set system.@system[0].hostname='OpenWrt-123''
 
-###  The version number is displayed in its own name (281.67716 million  Build  $ (TZ = UTC-8  DATE  "+% Y.% m.% D")  @  These are the increase of)
-sed -i "s/OpenWrt /Compiled By Eliminater74 On $(TZ=UTC-8 date "+%m.%d.%Y") @ OpenWrt /g"
-
 ### Set the  password to be empty (you do not need a password to log in when installing the firmware, and then modify the password you want)
 # sed -i 's@.*CYXluq4wUazHjmCDBCqXF*@#&@g'
 
@@ -139,13 +136,11 @@ sed -i "s/OpenWrt /Compiled By Eliminater74 On $(TZ=UTC-8 date "+%m.%d.%Y") @ Op
 ### Change /etc/profile to allow running scripts as bash
 sed 's/./bash/' /etc/profile
 
-### ---------------------------------------------------------------------------------------------------------- ###
-
-#sed -i 's#downloads.openwrt.org#mirrors.cloud.tencent.com/lede#g' /etc/opkg/distfeeds.conf
 #sed -i 's/root::0:0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
 
+### ---------------------------------------------------------------------------------------------------------- ###
+
 sed -i "s/# //g" /etc/opkg/distfeeds.conf
-# sed -i '/openwrt_luci/ { s/snapshots/releases\/18.06.9/g; }'  /etc/opkg/distfeeds.conf
 
 sed -i '/REDIRECT --to-ports 53/d' /etc/firewall.user
 echo 'iptables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
