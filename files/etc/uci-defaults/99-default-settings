@@ -121,23 +121,24 @@ sed -i '/tomato/d' /etc/opkg/distfeeds.conf
 
 ln -sf /sbin/ip /usr/bin/ip
 
+### -------------------------------------------- S Q M ------------------------------------------------------- ###
+
+WAN_IFACE=$(uci get network.wan.device)
+uci set sqm.eth1.interface="$WAN_IFACE"
+uci commit sqm
+/etc/init.d/sqm reload
+
+echo "0 6,14,22 * * * /usr/lib/OpenWrtScripts/autoSQM.sh" >> /etc/crontabs/root
+crontab /etc/crontabs/root
+
+### ---------------------------------------------------------------------------------------------------------- ###
+
 ### ---------------------------------------------------------------------------------------------------------- ###
 ##### SPECIAL MODIFICATIONS #####
 ##### --------------------- #####
-###  Modify the host name, the OpenWrt-123 modifications you like on the line (not pure digital)
-# sed -i '/uci commit system/i\uci set system.@system[0].hostname='OpenWrt-123''
-
-### Set the  password to be empty (you do not need a password to log in when installing the firmware, and then modify the password you want)
-# sed -i 's@.*CYXluq4wUazHjmCDBCqXF*@#&@g'
-
-### Delete the default password
-# sed -i "/CYXluq4wUazHjmCDBCqXF/d"
 
 ### Change /etc/profile to allow running scripts as bash
 sed 's/./bash/' /etc/profile
-
-#sed -i 's/root::0:0:99999:7:::/root:$1$V4UetPzk$CYXluq4wUazHjmCDBCqXF.:0:0:99999:7:::/g' /etc/shadow
-
 ### ---------------------------------------------------------------------------------------------------------- ###
 
 sed -i "s/# //g" /etc/opkg/distfeeds.conf
@@ -148,8 +149,11 @@ echo 'iptables -t nat -A PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53'
 #echo '[ -n "$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -p udp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
 #echo '[ -n "$(command -v ip6tables)" ] && ip6tables -t nat -A PREROUTING -p tcp --dport 53 -j REDIRECT --to-ports 53' >> /etc/firewall.user
 
-## Lets Keep Wireless Enabled
+## Lets keep Wireless Enabled (after downloading the firmware, the wireless is turned off by default)
+## ref: https://forum.openwrt.org/t/solved-enable-wi-fi-and-connect-to-a-network-on-first-boot/47399/24
 sed -i '/option disabled/d' /etc/config/wireless
+# wifi off: set wireless.radio${devidx}.disabled=1
+# wifi on: set wireless.radio${devidx}.disabled=0
 sed -i '/set wireless.radio${devidx}.disabled/d' /lib/wifi/mac80211.sh
 wifi up
 
@@ -224,6 +228,12 @@ echo kernel.msgmax = 65536 >>"$SYSCTL_LOCAL"
 echo kernel.msgmnb = 65536 >>"$SYSCTL_LOCAL"
 echo vm.swappiness=0 >>"$SYSCTL_LOCAL"
 
+# hsts=1/on/yes: same as --hsts
+# hsts=0/off/no: same as --no-hsts
+# --no-hsts
+### Wget supports HSTS (HTTP Strict Transport Security, RFC 6797) by default. Use ‘--no-hsts’ to make Wget 
+### act as a non-HSTS-compliant UA. As a consequence, Wget would ignore all the Strict-Transport-Security 
+### headers, and would not enforce any existing HSTS policy.
 echo 'hsts=0' > /root/.wgetrc
 
 # Flag packages
@@ -232,10 +242,10 @@ opkg flag hold firewall
 opkg flag hold dnsmasq-full
 
 # packet_steering
+# use every cpu to handle packet traffic
 uci set network.globals.packet_steering='1'
 uci commit network
 /etc/init.d/network restart
-
 
 cp -pR /www/cgi-bin/* /www/
 
@@ -259,5 +269,134 @@ ln -sf /bin/busybox /bin/top
 rm -rf /tmp/luci-modulecache
 rm -f /tmp/luci-indexcache*
 rm -rf /tmp/luci-*
+
+##############################################################################
+# >>>>>>>>>>>>>>>>>>>>>>>  H  A  R  D  E  N  I  N  G <<<<<<<<<<<<<<<<<<<<<<< #
+##############################################################################
+
+### Restrict SSH access to the local network (LAN)
+
+uci set dropbear.@dropbear[0].Interface='lan'
+uci commit dropbear
+service dropbear restart 
+### -- END --
+
+### Ensure that we use/redirect to HTTPS always
+
+uci set uhttpd.main.redirect_https='1'
+uci commit uhttpd
+service uhttpd restart
+service uhttpd enable
+### -- END --
+
+### BCP38: http://www.bcp38.info/index.php/Main_Page
+
+## This is less about protecting your router and more about preventing your network's 
+## contribution to some types of DoS/DDoS attack
+uci set bcp38.@bcp38[0].enabled='1'
+uci set bcp38.@bcp38[0].interface=$WAN_IFACE #Adjust to match your WAN port - may be something like eth0.2 for example.
+uci commit bcp38 
+
+service bcp38 restart
+service bcp38 enable
+### -- END --
+
+
+### ---------------------------------------------------------------------------------------- ###
+###  BANIP: https://github.com/openwrt/packages/blob/master/net/banip/files/README.md        ###
+### ---------------------------------------------------------------------------------------- ###
+uci set banip.global.ban_enabled='1'
+uci set banip.global.ban_trigger='wan' #Configure to your proper WAN interface, eg. 'eth0.2' or 'wan'
+uci set banip.global.ban_autodetect='1'
+uci set banip.global.ban_logsrc_enabled='1'
+uci set banip.global.ban_maxqueue='4'
+uci set banip.global.ban_fetchutil='wget'
+uci set banip.global.ban_fetchinsecure='1'
+uci set banip.global.ban_global_settype='src+dst'
+uci set banip.global.ban_target_src='DROP'
+uci set banip.global.ban_target_dst='REJECT'
+uci set banip.global.ban_settype_src='country' 'dshield'
+uci set banip.global.ban_loglimit='100'
+uci set banip.global.ban_logopts_src='-m limit --limit 2/sec'
+uci set banip.global.ban_countries='ru' 'cn' 'af' 'ir' 'iq' 'ua' 'ao' 'ai' 'ar' 'az' 'bd' 'by' 'br'
+uci set banip.global.ban_localsources='blacklist'
+uci set banip.global.ban_autoblacklist='1'
+uci set banip.global.ban_autowhitelist='1'
+uci delete banip.global.ban_sources
+uci add_list banip.global.ban_sources='darklist'
+uci add_list banip.global.ban_sources='debl'
+uci add_list banip.global.ban_sources='drop'
+uci add_list banip.global.ban_sources='feodo'
+uci add_list banip.global.ban_sources='firehol1'
+uci add_list banip.global.ban_sources='greensnow'
+uci add_list banip.global.ban_sources='iblockads'
+uci add_list banip.global.ban_sources='iblockspy'
+uci add_list banip.global.ban_sources='myip'
+uci add_list banip.global.ban_sources='nixspam'
+uci add_list banip.global.ban_sources='proxy'
+uci add_list banip.global.ban_sources='sslbl'
+uci add_list banip.global.ban_sources='talos'
+uci add_list banip.global.ban_sources='threat'
+uci add_list banip.global.ban_sources='tor'
+uci add_list banip.global.ban_sources='uceprotect1'
+uci add_list banip.global.ban_sources='yoyo'
+
+### Allowlist a few sites that I've seen some blocklists break before.
+echo "enro.com" >> /etc/banip/banip.whitelist
+echo "www.reddit.com" >> /etc/banip/banip.whitelist
+echo "yelp.com" >> /etc/banip/banip.whitelist
+
+uci commit banip
+service banip restart
+service banip enable
+
+### refreshing the blocklists every 24 hours
+echo "15 07 * * * /etc/init.d/banip reload" >> /etc/crontabs/root
+crontab /etc/crontabs/root
+### -- END --
+
+### adblock
+uci set adblock.global.adb_enabled='0'
+uci set adblock.global.adb_trigger='wan'
+uci set adblock.global.adb_debug='0'
+uci set adblock.global.adb_dnsfilereset='0'
+uci set adblock.global.adb_mail='0'
+uci set adblock.global.adb_report='0'
+uci set adblock.global.adb_backup='1'
+uci set adblock.global.adb_maxqueue='4'
+uci set adblock.global.adb_dns='dnsmasq'
+uci set adblock.global.adb_fetchutil='wget'
+uci set adblock.global.adb_fetchinsecure='1'
+uci set adblock.global.adb_dnsinstance='0'
+uci set adblock.global.adb_eng_sources='bluGo/formats/domains.txt'
+uci set adblock.global.adb_forcedns='1'
+uci set adblock.global.adb_zonelist='lan'
+uci set adblock.global.adb_stb_sources='alternates/fakenews/hosts'
+uci set adblock.global.adb_utc_sources='drogue' 'adult' 'associations_religieuses' 'bitcoin' 'phishing' 'malware'
+uci set adblock.global.adb_safesearch='0'
+adblock.global.adb_sources='adaway' 'adguard' 'andryou' 'anti_ad' 'anudeep' 'disconnect' 'energized' 'openphish' 'reg_es' 'spam404' 'stevenblack' 'stopforumspam' 'whocares' 'yoyo'
+
+uci commit adblock
+service adblock restart
+service adblock enable
+
+### refreshing the blocklists every 24 hours
+echo "16 07 * * * /etc/init.d/adblock reload" >> /etc/crontabs/root
+crontab /etc/crontabs/root
+
+### -- END --
+
+### Firewall DROP external connections
+if [ $(uci get firewall.@zone[0].name) = 'wan' ]; then zona=0
+elif [ $(uci get firewall.@zone[-1].name) = 'wan' ]; then zona=-1
+elif [ $(uci get firewall.@zone[-2].name) = 'wan' ]; then zona=-2
+fi
+
+uci set firewall.@zone[$zona].input='DROP'
+uci set firewall.@zone[$zona].forward='DROP'
+uci commit firewall
+service firewall restart
+### -- END --
+
 
 exit 0
