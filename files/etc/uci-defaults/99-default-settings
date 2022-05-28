@@ -287,54 +287,7 @@ service bcp38 enable
 ### ---------------------------------------------------------------------------------------- ###
 ###  BANIP: https://github.com/openwrt/packages/blob/master/net/banip/files/README.md        ###
 ### ---------------------------------------------------------------------------------------- ###
-uci set banip.global.ban_enabled='1'
-uci set banip.global.ban_trigger='wan' #Configure to your proper WAN interface, eg. 'eth0.2' or 'wan'
-uci set banip.global.ban_autodetect='1'
-uci set banip.global.ban_logsrc_enabled='1'
-uci set banip.global.ban_maxqueue='4'
-uci set banip.global.ban_fetchutil='wget'
-uci set banip.global.ban_fetchinsecure='1'
-uci set banip.global.ban_global_settype='src+dst'
-uci set banip.global.ban_target_src='DROP'
-uci set banip.global.ban_target_dst='REJECT'
-uci set banip.global.ban_settype_src='country' 'dshield'
-uci set banip.global.ban_loglimit='100'
-uci set banip.global.ban_logopts_src='-m limit --limit 2/sec'
-uci set banip.global.ban_countries='ru' 'cn' 'af' 'ir' 'iq' 'ua' 'ao' 'ai' 'ar' 'az' 'bd' 'by' 'br'
-uci set banip.global.ban_localsources='blacklist'
-uci set banip.global.ban_autoblacklist='1'
-uci set banip.global.ban_autowhitelist='1'
-uci delete banip.global.ban_sources
-uci add_list banip.global.ban_sources='darklist'
-uci add_list banip.global.ban_sources='debl'
-uci add_list banip.global.ban_sources='drop'
-uci add_list banip.global.ban_sources='feodo'
-uci add_list banip.global.ban_sources='firehol1'
-uci add_list banip.global.ban_sources='greensnow'
-uci add_list banip.global.ban_sources='iblockads'
-uci add_list banip.global.ban_sources='iblockspy'
-uci add_list banip.global.ban_sources='myip'
-uci add_list banip.global.ban_sources='nixspam'
-uci add_list banip.global.ban_sources='proxy'
-uci add_list banip.global.ban_sources='sslbl'
-uci add_list banip.global.ban_sources='talos'
-uci add_list banip.global.ban_sources='threat'
-uci add_list banip.global.ban_sources='tor'
-uci add_list banip.global.ban_sources='uceprotect1'
-uci add_list banip.global.ban_sources='yoyo'
 
-### Allowlist a few sites that I've seen some blocklists break before.
-echo "enro.com" >> /etc/banip/banip.whitelist
-echo "www.reddit.com" >> /etc/banip/banip.whitelist
-echo "yelp.com" >> /etc/banip/banip.whitelist
-
-uci commit banip
-service banip restart
-service banip enable
-
-### refreshing the blocklists every 24 hours
-echo "15 07 * * * /etc/init.d/banip reload" >> /etc/crontabs/root
-crontab /etc/crontabs/root
 ### -- END --
 
 ### adblock
