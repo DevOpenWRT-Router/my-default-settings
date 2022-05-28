@@ -110,7 +110,6 @@ echo 'src/gz purefusion_base https://raw.githubusercontent.com/DevOpenWRT-Router
 echo 'src/gz purefusion_luci https://raw.githubusercontent.com/DevOpenWRT-Router/Linksys_OpenWRT_Releases/main/packages/luci' >> /etc/opkg/distfeeds.conf
 echo 'src/gz purefusion_routing https://raw.githubusercontent.com/DevOpenWRT-Router/Linksys_OpenWRT_Releases/main/packages/routing' >> /etc/opkg/distfeeds.conf
 echo 'src/gz purefusion_telephony https://raw.githubusercontent.com/DevOpenWRT-Router/Linksys_OpenWRT_Releases/main/packages/telephony' >> /etc/opkg/distfeeds.conf
-sed -i '/tomato/d' /etc/opkg/distfeeds.conf
 
 ln -sf /sbin/ip /usr/bin/ip
 
@@ -123,8 +122,6 @@ uci commit sqm
 
 echo "0 6,14,22 * * * /usr/lib/OpenWrtScripts/autoSQM.sh" >> /etc/crontabs/root
 crontab /etc/crontabs/root
-
-### ---------------------------------------------------------------------------------------------------------- ###
 
 ### ---------------------------------------------------------------------------------------------------------- ###
 ##### SPECIAL MODIFICATIONS #####
