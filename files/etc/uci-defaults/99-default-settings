@@ -275,7 +275,7 @@ service uhttpd enable
 
 ## This is less about protecting your router and more about preventing your network's 
 ## contribution to some types of DoS/DDoS attack
-uci set bcp38.@bcp38[0].enabled='1'
+uci set bcp38.@bcp38[0].enabled='0'
 uci set bcp38.@bcp38[0].interface=$WAN_IFACE #Adjust to match your WAN port - may be something like eth0.2 for example.
 uci commit bcp38 
 
@@ -287,7 +287,7 @@ service bcp38 enable
 ### ---------------------------------------------------------------------------------------- ###
 ###  BANIP: https://github.com/openwrt/packages/blob/master/net/banip/files/README.md        ###
 ### ---------------------------------------------------------------------------------------- ###
-uci set banip.global.ban_enabled='1'
+uci set banip.global.ban_enabled='0'
 uci set banip.global.ban_trigger='wan'
 uci set banip.global.ban_autodetect='1'
 uci set banip.global.ban_logsrc_enabled='1'
@@ -352,7 +352,7 @@ crontab /etc/crontabs/root
 ### -- END --
 
 ### adblock
-uci set adblock.global.adb_enabled='1'
+uci set adblock.global.adb_enabled='0'
 uci set adblock.global.adb_trigger='wan'
 uci set adblock.global.adb_debug='0'
 uci set adblock.global.adb_dnsfilereset='0'
