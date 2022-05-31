@@ -348,9 +348,9 @@ print_wan() {
 						done
 					fi
 					if [ "$State" == "1" ]; then
-						[ "$IP4" != "" ] && print_line 	"WAN: $AddrColor$IP4$NormalColor($Iface),"\
+						[ "$IP4" != "" ] && print_line 	"WAN: $AddrColor$IP4$NormalColor($Iface),\n"\
 														"gateway: $AddrColor${Gateway4:-n/a}$NormalColor"
-						[ "$IP6" != "" ] && print_line	"WAN: $AddrColor$IP6$NormalColor($Iface),"\
+						[ "$IP6" != "" ] && print_line	"WAN: $AddrColor$IP6$NormalColor($Iface),\n"\
 														"gateway: $AddrColor${Gateway6:-n/a}$NormalColor"
 						print_line	"proto: $ValueColor${Protocol:-n/a}$NormalColor,"\
 									"uptime: $ValueColor$(uptime_str $Uptime)$NormalColor$(device_rx_tx $Iface)"
